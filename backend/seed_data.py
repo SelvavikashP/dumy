@@ -8,9 +8,16 @@ from app.models.models import (
     ExternalPlatform, PlatformSetting
 )
 
+from sqlalchemy import select
+
 async def seed():
     await init_db()
     async with AsyncSessionLocal() as db:
+        res = await db.execute(select(PortalAdmin).filter_by(email="admin@assessmentportal.io"))
+        if res.scalar_one_or_none():
+            print("[+] Database already seeded. Skipping.")
+            return
+
         print("[+] Seeding initial platform data...")
 
         # 1. Portal Admin

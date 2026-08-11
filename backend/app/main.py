@@ -13,6 +13,11 @@ from app.api.v1 import (
 async def lifespan(app: FastAPI):
     # Initialize DB schemas on startup
     await init_db()
+    try:
+        from seed_data import seed
+        await seed()
+    except Exception as e:
+        print(f"[!] Auto-seed check: {e}")
     yield
 
 app = FastAPI(
