@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.core.security import require_test_creator
 from app.core.audit import log_audit_event
@@ -21,7 +22,15 @@ async def list_questions(
     db: AsyncSession = Depends(get_db)
 ):
     """Lists repository questions with filtering support."""
-    query = select(Question).order_by(Question.created_at.desc()).limit(limit)
+    query = (
+        select(Question)
+        .options(
+            selectinload(Question.options),
+            selectinload(Question.coding_problem).selectinload(CodingProblem.test_cases)
+        )
+        .order_by(Question.created_at.desc())
+        .limit(limit)
+    )
     if type_filter:
         query = query.where(Question.type == type_filter.upper())
     if topic_filter:

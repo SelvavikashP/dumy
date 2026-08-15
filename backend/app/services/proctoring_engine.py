@@ -146,14 +146,40 @@ class ProctoringEngineService:
             )
             db.add(w_log)
 
-            # Check Auto Suspension
-            if assessment.auto_suspension_enabled and attempt.warning_count >= assessment.warning_limit:
+            # Check Auto Suspension (Strict warning limit reached, e.g. 3 warnings)
+            if attempt.warning_count >= assessment.warning_limit:
                 attempt.status = "SUSPENDED"
-                attempt.suspension_reason = f"Configured assessment security threshold reached ({attempt.warning_count} warnings logged)."
+                attempt.suspension_reason = f"Security violation threshold reached ({attempt.warning_count} warning(s) logged: {cls.EVENT_DESCRIPTIONS.get(event_type, event_type)})."
                 session.is_suspended = True
                 session.risk_level = "CRITICAL"
                 is_suspended = True
-                warning_message = "Your assessment attempt has been suspended because the configured security threshold was reached. Your answers and code have been preserved."
+                warning_message = f"Your assessment attempt has been suspended because the security limit of {assessment.warning_limit} warnings was reached."
+
+                # Send email report to candidate & test creator
+                try:
+                    from app.services.email_service import EmailService
+                    from app.models.models import Attender
+                    att_user = attempt.attender
+                    cand_email = att_user.email if att_user else ""
+                    cand_name = att_user.full_name if att_user else "Candidate"
+                    
+                    creator_res = await db.execute(select(Attender).where(Attender.id == assessment.creator_id))
+                    creator_user = creator_res.scalars().first()
+                    creator_email = creator_user.email if creator_user else None
+
+                    if cand_email:
+                        await EmailService.send_suspension_report(
+                            email=cand_email,
+                            creator_email=creator_email,
+                            candidate_name=cand_name,
+                            assessment_title=assessment.title,
+                            suspension_reason=attempt.suspension_reason,
+                            warning_count=attempt.warning_count,
+                            warning_limit=assessment.warning_limit,
+                            db=db
+                        )
+                except Exception as ex:
+                    print(f"[!] ProctoringEngine: Error dispatching suspension email: {ex}")
 
         await db.commit()
 

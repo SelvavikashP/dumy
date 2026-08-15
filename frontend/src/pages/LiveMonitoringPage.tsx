@@ -54,22 +54,22 @@ export const LiveMonitoringPage: React.FC = () => {
   }, [selectedAsmId]);
 
   return (
-    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-mono text-accent-emerald uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-accent-emerald animate-ping" />
+          <div className="flex items-center space-x-2 text-xs font-mono text-emerald-600 dark:text-accent-emerald uppercase tracking-wider mb-1 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span>Real-Time Surveillance Stream</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Live Candidate Monitoring</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Live Candidate Monitoring</h1>
         </div>
 
         <div className="flex items-center space-x-3">
           <select
             value={selectedAsmId}
             onChange={(e) => setSelectedAsmId(e.target.value)}
-            className="bg-surface-850 text-slate-200 rounded-xl px-3.5 py-2 text-xs border border-slate-700 font-mono focus:outline-none focus:border-brand-500"
+            className="bg-white dark:bg-surface-850 text-slate-900 dark:text-slate-200 rounded-xl px-3.5 py-2 text-xs border border-slate-300 dark:border-slate-700 font-mono focus:outline-none focus:border-brand-500 shadow-sm"
           >
             {assessments.map((a) => (
               <option key={a.id} value={a.id}>
@@ -81,7 +81,7 @@ export const LiveMonitoringPage: React.FC = () => {
           <button
             onClick={() => loadLiveFeed(selectedAsmId)}
             disabled={isRefreshing}
-            className="p-2.5 rounded-xl bg-surface-850 hover:bg-slate-800 text-slate-300 border border-slate-700 transition"
+            className="p-2.5 rounded-xl bg-white dark:bg-surface-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition shadow-sm"
             title="Refresh feed"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -90,27 +90,27 @@ export const LiveMonitoringPage: React.FC = () => {
       </div>
 
       {/* Overview Alert Banner */}
-      <div className="p-4 rounded-2xl glass-card border border-slate-800 flex items-center justify-between text-xs font-mono">
+      <div className="p-4 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-mono">
         <div className="flex items-center space-x-3">
-          <Activity className="w-4 h-4 text-accent-cyan" />
-          <span className="text-slate-300">
-            Monitoring <strong className="text-white">{candidates.length}</strong> active &amp; registered candidate(s)
+          <Activity className="w-4 h-4 text-cyan-600 dark:text-accent-cyan" />
+          <span className="text-slate-700 dark:text-slate-300">
+            Monitoring <strong className="text-slate-900 dark:text-white">{candidates.length}</strong> active &amp; registered candidate(s)
           </span>
         </div>
-        <div className="flex items-center space-x-3 text-[11px] text-slate-400">
+        <div className="flex items-center space-x-3 text-[11px] text-slate-500 dark:text-slate-400">
           <span>Auto-sync interval: 5s</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
         </div>
       </div>
 
       {/* Candidate Surveillance Grid */}
       {candidates.length === 0 ? (
-        <div className="py-20 text-center space-y-3 glass-panel rounded-2xl border border-slate-800">
-          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+        <div className="py-20 text-center space-y-3 glass-panel rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-500 dark:text-slate-400">
             <Eye className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-white">No Active Test Attempts Found</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">No Active Test Attempts Found</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
             Candidates who begin their proctored assessment sessions will appear in this real-time surveillance feed.
           </p>
         </div>

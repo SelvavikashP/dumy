@@ -101,16 +101,14 @@ export const AssessmentBuilder: React.FC = () => {
   const [tabDetection, setTabDetection] = useState<boolean>(true);
   const [warningLimit, setWarningLimit] = useState<number>(3);
   const [autoSuspension, setAutoSuspension] = useState<boolean>(true);
-  const [reattemptPolicy, setReattemptPolicy] = useState<string>('MANUAL');
-  const [difficultyEscalation, setDifficultyEscalation] = useState<boolean>(true);
 
   const addSection = () => {
     setSections((prev) => [
       ...prev,
       {
-        title: `Section ${prev.length + 1} — New Section`,
-        description: 'Section description',
-        duration_minutes: 20,
+        title: `Section ${prev.length + 1}`,
+        description: 'New assessment section.',
+        duration_minutes: 30,
         section_order: prev.length + 1,
         questions: []
       }
@@ -130,107 +128,112 @@ export const AssessmentBuilder: React.FC = () => {
         duration_minutes: duration,
         passing_percentage: passingPercentage,
         difficulty,
-        instructions: '• Proctored assessment session.\n• Avoid navigating away or switching tabs.',
-        randomize_questions: false,
         negative_marking: negativeMarking,
         negative_marking_value: negativeValue,
         proctoring_level: proctoringLevel,
         camera_required: cameraRequired,
-        microphone_required: micRequired,
+        mic_required: micRequired,
         fullscreen_required: fullscreenRequired,
-        tab_detection_enabled: tabDetection,
+        tab_switch_detection: tabDetection,
         warning_limit: warningLimit,
-        auto_suspension_enabled: autoSuspension,
-        reattempt_policy: reattemptPolicy,
-        max_reattempts: 1,
-        difficulty_escalation: difficultyEscalation,
+        auto_suspend_on_limit: autoSuspension,
         sections
       });
       navigate('/creator/assessments');
-    } catch (e: any) {
-      alert(e.message || 'Failed to save assessment');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create assessment');
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-8 font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-2 text-xs font-mono text-brand-400 uppercase tracking-wider mb-1">
-            <Layers className="w-4 h-4" />
-            <span>Interactive Assessment Builder</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Create New Assessment</h1>
+      <div>
+        <div className="flex items-center space-x-2 text-xs font-mono text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-1 font-semibold">
+          <Layers className="w-4 h-4" />
+          <span>Assessment Authoring Wizard</span>
         </div>
-
-        {/* Step Indicator */}
-        <div className="flex items-center space-x-2 font-mono text-xs">
-          <span className={`px-3 py-1 rounded-lg ${step === 1 ? 'bg-brand-600 text-white font-bold' : 'bg-surface-850 text-slate-400'}`}>1. Details</span>
-          <span className={`px-3 py-1 rounded-lg ${step === 2 ? 'bg-brand-600 text-white font-bold' : 'bg-surface-850 text-slate-400'}`}>2. Sections &amp; Qs</span>
-          <span className={`px-3 py-1 rounded-lg ${step === 3 ? 'bg-brand-600 text-white font-bold' : 'bg-surface-850 text-slate-400'}`}>3. Proctoring</span>
-        </div>
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Create New Assessment</h1>
       </div>
 
-      {/* Step 1: General Details */}
-      {step === 1 && (
-        <div className="glass-panel p-8 rounded-2xl border border-slate-800 space-y-5 text-xs font-mono">
-          <h3 className="text-base font-bold text-white font-sans border-b border-slate-800 pb-3">
-            General Assessment Configuration
-          </h3>
+      {/* Step Indicators */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { num: 1, label: '1. Basic Configuration' },
+          { num: 2, label: '2. Sections & Problems' },
+          { num: 3, label: '3. Proctoring & Security' }
+        ].map((s) => (
+          <button
+            key={s.num}
+            onClick={() => setStep(s.num)}
+            className={`p-3.5 rounded-xl border text-xs font-mono text-left transition ${
+              step === s.num
+                ? 'bg-brand-50 dark:bg-brand-950/40 border-brand-500 text-brand-700 dark:text-brand-300 shadow-md ring-1 ring-brand-500/30'
+                : step > s.num
+                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400'
+                : 'bg-white dark:bg-surface-850 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <span className="font-bold">{s.label}</span>
+          </button>
+        ))}
+      </div>
 
+      {/* Step 1: Basic Config */}
+      {step === 1 && (
+        <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs font-mono shadow-sm">
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Assessment Title</label>
+            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Assessment Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full p-3 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 font-sans text-sm focus:outline-none focus:border-brand-500"
+              className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-sans text-xs focus:outline-none focus:border-brand-500 shadow-sm"
             />
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Assessment Description &amp; Candidate Scope</label>
+            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Description &amp; Guidelines</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full p-3 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 font-sans text-xs focus:outline-none focus:border-brand-500"
+              className="w-full p-3 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-sans text-xs focus:outline-none focus:border-brand-500 shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Total Duration (Minutes)</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Total Duration (Minutes)</label>
               <input
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value))}
                 min={10}
                 max={240}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Passing Score (%)</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Passing Score (%)</label>
               <input
                 type="number"
                 value={passingPercentage}
                 onChange={(e) => setPassingPercentage(parseFloat(e.target.value))}
                 min={10}
                 max={100}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Overall Difficulty</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Overall Difficulty</label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               >
                 <option value="EASY">EASY</option>
                 <option value="MEDIUM">MEDIUM</option>
@@ -239,15 +242,15 @@ export const AssessmentBuilder: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex items-center justify-between border-t border-slate-800">
+          <div className="pt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={negativeMarking}
                 onChange={(e) => setNegativeMarking(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded bg-surface-850 border-slate-700"
+                className="w-4 h-4 text-brand-600 rounded bg-white dark:bg-surface-850 border-slate-300 dark:border-slate-700"
               />
-              <span className="text-slate-300 font-sans text-xs">Enable Negative Marking for MCQ / Aptitude Questions</span>
+              <span className="text-slate-700 dark:text-slate-300 font-sans text-xs">Enable Negative Marking for MCQ / Aptitude Questions</span>
             </label>
 
             <button
@@ -266,10 +269,10 @@ export const AssessmentBuilder: React.FC = () => {
       {step === 2 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white">Assessment Sections ({sections.length})</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assessment Sections ({sections.length})</h3>
             <button
               onClick={addSection}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-brand-300 border border-brand-800/50 text-xs font-mono flex items-center space-x-1.5 transition"
+              className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-brand-700 dark:text-brand-300 border border-slate-300 dark:border-brand-800/50 text-xs font-mono flex items-center space-x-1.5 transition shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Section</span>
@@ -277,8 +280,8 @@ export const AssessmentBuilder: React.FC = () => {
           </div>
 
           {sections.map((sec, idx) => (
-            <div key={idx} className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div key={idx} className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <input
                   type="text"
                   value={sec.title}
@@ -287,13 +290,13 @@ export const AssessmentBuilder: React.FC = () => {
                     next[idx].title = e.target.value;
                     setSections(next);
                   }}
-                  className="font-bold text-white text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded px-1.5 py-0.5 w-2/3"
+                  className="font-bold text-slate-900 dark:text-white text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-brand-500 rounded px-1.5 py-0.5 w-2/3"
                 />
 
-                <div className="flex items-center space-x-3 text-xs font-mono">
+                <div className="flex items-center space-x-3 text-xs font-mono text-slate-700 dark:text-slate-300">
                   <span>{sec.duration_minutes} Mins</span>
                   {sections.length > 1 && (
-                    <button onClick={() => removeSection(idx)} className="text-rose-400 hover:text-rose-300">
+                    <button onClick={() => removeSection(idx)} className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -302,16 +305,16 @@ export const AssessmentBuilder: React.FC = () => {
 
               {/* Questions count */}
               <div className="space-y-2">
-                <div className="text-xs text-slate-400 font-mono">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                   Questions in Section ({sec.questions?.length || 0}):
                 </div>
                 {sec.questions?.map((q: any, qIdx: number) => (
-                  <div key={qIdx} className="p-3 rounded-xl bg-surface-850 border border-slate-800 text-xs flex items-center justify-between">
+                  <div key={qIdx} className="p-3 rounded-xl bg-slate-50 dark:bg-surface-850 border border-slate-200 dark:border-slate-800 text-xs flex items-center justify-between shadow-sm">
                     <div className="flex items-center space-x-2.5">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-brand-300 font-mono text-[10px]">{q.type}</span>
-                      <span className="text-slate-200 font-medium truncate max-w-lg">{q.problem_statement || q.coding_problem?.title}</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-brand-700 dark:text-brand-300 font-mono text-[10px] font-bold">{q.type}</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium truncate max-w-lg">{q.problem_statement || q.coding_problem?.title}</span>
                     </div>
-                    <span className="text-slate-400 font-mono">{q.points} pts</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-mono">{q.points} pts</span>
                   </div>
                 ))}
               </div>
@@ -321,7 +324,7 @@ export const AssessmentBuilder: React.FC = () => {
           <div className="flex items-center justify-between pt-4">
             <button
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs flex items-center space-x-2"
+              className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-transparent font-mono text-xs flex items-center space-x-2 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -340,39 +343,72 @@ export const AssessmentBuilder: React.FC = () => {
 
       {/* Step 3: Proctoring & Finalize */}
       {step === 3 && (
-        <div className="glass-panel p-8 rounded-2xl border border-slate-800 space-y-6 text-xs font-mono">
-          <div className="flex items-center space-x-2 text-sm font-bold text-white border-b border-slate-800 pb-3">
-            <ShieldCheck className="w-5 h-5 text-accent-cyan" />
+        <div className="glass-panel p-8 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6 text-xs font-mono shadow-sm">
+          <div className="flex items-center space-x-2 text-sm font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-3">
+            <ShieldCheck className="w-5 h-5 text-cyan-600 dark:text-accent-cyan" />
             <span>Proctoring, Sentinel &amp; Warning Configuration</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Proctoring Enforcement Level</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Proctoring Enforcement Level Preset</label>
               <select
                 value={proctoringLevel}
-                onChange={(e) => setProctoringLevel(e.target.value)}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                onChange={(e) => {
+                  const lvl = e.target.value;
+                  setProctoringLevel(lvl);
+                  if (lvl === 'OFF') {
+                    setCameraRequired(false);
+                    setMicRequired(false);
+                    setFullscreenRequired(false);
+                    setTabDetection(false);
+                    setWarningLimit(5);
+                    setAutoSuspension(false);
+                  } else if (lvl === 'BASIC') {
+                    setCameraRequired(true);
+                    setMicRequired(false);
+                    setFullscreenRequired(false);
+                    setTabDetection(true);
+                    setWarningLimit(5);
+                    setAutoSuspension(false);
+                  } else if (lvl === 'STANDARD') {
+                    setCameraRequired(true);
+                    setMicRequired(false);
+                    setFullscreenRequired(true);
+                    setTabDetection(true);
+                    setWarningLimit(3);
+                    setAutoSuspension(true);
+                  } else if (lvl === 'STRICT') {
+                    setCameraRequired(true);
+                    setMicRequired(true);
+                    setFullscreenRequired(true);
+                    setTabDetection(true);
+                    setWarningLimit(3);
+                    setAutoSuspension(true);
+                  }
+                }}
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               >
-                <option value="OFF">OFF (Unproctored)</option>
-                <option value="BASIC">BASIC (Webcam Presence Check)</option>
+                <option value="OFF">OFF (Unproctored / Open Book Practice)</option>
+                <option value="BASIC">BASIC (Tab Switch Detection Only)</option>
                 <option value="STANDARD">STANDARD (Camera + Fullscreen + Tab Switching)</option>
-                <option value="STRICT">STRICT (All Signals + Enhanced Evidence Sentinel)</option>
+                <option value="STRICT">STRICT (Camera + Mic + Fullscreen + Auto-Suspension)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Warning Limit Before Suspension</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans font-mono">Warning Threshold Limit</label>
               <select
                 value={warningLimit}
                 onChange={(e) => setWarningLimit(parseInt(e.target.value))}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               >
-                <option value={1}>1 Warning (Strict)</option>
+                <option value={1}>1 Warning (Strict Single-Chance)</option>
                 <option value={2}>2 Warnings</option>
-                <option value={3}>3 Warnings (Standard Default)</option>
+                <option value={3}>3 Warnings (Standard Industry Default)</option>
                 <option value={4}>4 Warnings</option>
                 <option value={5}>5 Warnings (Lenient)</option>
+                <option value={10}>10 Warnings (Maximum Tolerance)</option>
               </select>
             </div>
           </div>
@@ -383,9 +419,9 @@ export const AssessmentBuilder: React.FC = () => {
                 type="checkbox"
                 checked={cameraRequired}
                 onChange={(e) => setCameraRequired(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded bg-surface-850 border-slate-700"
+                className="w-4 h-4 text-brand-600 rounded bg-white dark:bg-surface-850 border-slate-300 dark:border-slate-700"
               />
-              <span className="text-slate-300 font-sans text-xs">Require Live Camera Verification &amp; Face Telemetry</span>
+              <span className="text-slate-700 dark:text-slate-300 font-sans text-xs">Require Live Camera Verification &amp; Face Telemetry</span>
             </label>
 
             <label className="flex items-center space-x-3 cursor-pointer">
@@ -393,9 +429,9 @@ export const AssessmentBuilder: React.FC = () => {
                 type="checkbox"
                 checked={fullscreenRequired}
                 onChange={(e) => setFullscreenRequired(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded bg-surface-850 border-slate-700"
+                className="w-4 h-4 text-brand-600 rounded bg-white dark:bg-surface-850 border-slate-300 dark:border-slate-700"
               />
-              <span className="text-slate-300 font-sans text-xs">Enforce Locked Fullscreen Window Mode</span>
+              <span className="text-slate-700 dark:text-slate-300 font-sans text-xs">Enforce Locked Fullscreen Window Mode</span>
             </label>
 
             <label className="flex items-center space-x-3 cursor-pointer">
@@ -403,9 +439,9 @@ export const AssessmentBuilder: React.FC = () => {
                 type="checkbox"
                 checked={tabDetection}
                 onChange={(e) => setTabDetection(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded bg-surface-850 border-slate-700"
+                className="w-4 h-4 text-brand-600 rounded bg-white dark:bg-surface-850 border-slate-300 dark:border-slate-700"
               />
-              <span className="text-slate-300 font-sans text-xs">Detect Browser Tab Switching and Window Focus Loss</span>
+              <span className="text-slate-700 dark:text-slate-300 font-sans text-xs">Detect Browser Tab Switching and Window Focus Loss</span>
             </label>
 
             <label className="flex items-center space-x-3 cursor-pointer">
@@ -413,16 +449,16 @@ export const AssessmentBuilder: React.FC = () => {
                 type="checkbox"
                 checked={autoSuspension}
                 onChange={(e) => setAutoSuspension(e.target.checked)}
-                className="w-4 h-4 text-brand-600 rounded bg-surface-850 border-slate-700"
+                className="w-4 h-4 text-brand-600 rounded bg-white dark:bg-surface-850 border-slate-300 dark:border-slate-700"
               />
-              <span className="text-slate-300 font-sans text-xs">Auto-suspend attempt when security warning threshold is reached</span>
+              <span className="text-slate-700 dark:text-slate-300 font-sans text-xs">Auto-suspend attempt when security warning threshold is reached</span>
             </label>
           </div>
 
-          <div className="flex items-center justify-between pt-6 border-t border-slate-800">
+          <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setStep(2)}
-              className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs flex items-center space-x-2"
+              className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-transparent font-mono text-xs flex items-center space-x-2 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Sections</span>

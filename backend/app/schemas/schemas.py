@@ -24,6 +24,7 @@ class AttenderRegisterRequest(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     password: str
+    role: Optional[str] = "TEST_ATTENDER" # TEST_ATTENDER (Candidate/Student) or TEST_CREATOR (Teacher/Creator)
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -33,6 +34,8 @@ class TokenResponse(BaseModel):
     user_id: str
     email: str
     full_name: str
+    otp_hint: Optional[str] = None
+    is_smtp_live: Optional[bool] = False
 
 class UserProfileResponse(BaseModel):
     id: str
@@ -349,3 +352,154 @@ class CandidateResultOut(BaseModel):
     suspension_reason: Optional[str] = None
     skill_breakdown: Dict[str, Any] = {}
     completed_at: Optional[datetime] = None
+
+# ----------------- Email, Verification & Reminders Schemas -----------------
+
+class SendOTPRequest(BaseModel):
+    email: EmailStr
+    token_type: Optional[str] = "REGISTRATION_OTP"
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp_code: str
+    token_type: Optional[str] = "REGISTRATION_OTP"
+
+class OTPResponse(BaseModel):
+    success: bool
+    message: str
+    email: str
+    is_verified: bool
+    expires_in_minutes: Optional[int] = 15
+
+class EmailSettingsSchema(BaseModel):
+    host: str = "smtp.gmail.com"
+    port: int = 587
+    user: str = ""
+    password: Optional[str] = ""
+    from_name: str = "EvalAI Assessment Platform"
+    from_email: Optional[str] = ""
+    use_tls: bool = True
+    frontend_url: Optional[str] = "http://localhost:5173"
+
+class TestEmailRequest(BaseModel):
+    to_email: EmailStr
+    subject: Optional[str] = "EvalAI Gmail SMTP Test Probe"
+    custom_message: Optional[str] = None
+
+class SendReminderRequest(BaseModel):
+    invitation_ids: Optional[List[str]] = None
+
+class InvitationItemResponse(BaseModel):
+    id: str
+    assessment_id: str
+    email: str
+    candidate_name: Optional[str] = None
+    status: str
+    invitation_token: str
+    reminder_count: int = 0
+    last_reminder_sent_at: Optional[datetime] = None
+    created_at: datetime
+
+
+# ----------------- Coding Problem Templates & Snippets -----------------
+
+class CodingProblemTemplateSummary(BaseModel):
+    id: str
+    title: str
+    difficulty: str
+    category: str
+    tags: List[str]
+    test_case_count: int
+    time_limit_sec: float
+    memory_limit_mb: int
+
+class CodingTestCaseTemplate(BaseModel):
+    input_data: str
+    expected_output: str
+    is_hidden: bool = False
+    points: float = 2.0
+
+class CodingProblemTemplateDetail(BaseModel):
+    id: str
+    title: str
+    difficulty: str
+    category: str
+    tags: List[str]
+    statement: str
+    input_format: str
+    output_format: str
+    constraints: str
+    time_limit_sec: float
+    memory_limit_mb: int
+    starter_code: Dict[str, str]
+    reference_solution: str
+    test_cases: List[CodingTestCaseTemplate]
+
+class SnippetResponse(BaseModel):
+    language: str
+    starter_code: str
+
+
+# ----------------- Proctoring Webcam Snapshots -----------------
+
+class SnapshotUploadRequest(BaseModel):
+    attempt_id: str
+    snapshot_base64: str
+    event_type: Optional[str] = "PERIODIC_CHECK"
+    confidence: Optional[float] = 1.0
+    metadata: Optional[Dict[str, Any]] = None
+
+class SnapshotUploadResponse(BaseModel):
+    success: bool
+    snapshot_id: str
+    event_id: Optional[str] = None
+    created_at: datetime
+
+class SnapshotGalleryItem(BaseModel):
+    id: str
+    attempt_id: str
+    candidate_name: str
+    candidate_email: str
+    event_type: str
+    severity: str
+    snapshot_url: str
+    timestamp: datetime
+    metadata: Dict[str, Any] = {}
+
+
+# ----------------- Verified Certificate & Performance Report -----------------
+
+class CertificateSkillScore(BaseModel):
+    category: str
+    score_percentage: float
+    status: str
+
+class CertificateResponse(BaseModel):
+    certificate_id: str
+    attempt_id: str
+    candidate_name: str
+    candidate_email: str
+    assessment_title: str
+    score_percentage: float
+    total_score: float
+    max_score: float
+    passed: bool
+    issue_date: str
+    verification_url: str
+    verification_hash: str
+    proctoring_integrity_score: float
+    skill_breakdown: List[CertificateSkillScore]
+    issuer: str = "EvalAI Enterprise Certification Authority"
+
+class CertificateVerifyResponse(BaseModel):
+    is_valid: bool
+    certificate_id: str
+    candidate_name: str
+    assessment_title: str
+    score_percentage: float
+    issue_date: str
+    status: str
+    issuer: str
+    verification_hash: str
+
+

@@ -34,6 +34,19 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+from sqlalchemy import text
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Lightweight SQLite column additions for backward compatibility
+        try:
+            res = await conn.execute(text("PRAGMA table_info(assessment_invitations)"))
+            cols = [row[1] for row in res.fetchall()]
+            if cols and "last_reminder_sent_at" not in cols:
+                await conn.execute(text("ALTER TABLE assessment_invitations ADD COLUMN last_reminder_sent_at DATETIME"))
+            if cols and "reminder_count" not in cols:
+                await conn.execute(text("ALTER TABLE assessment_invitations ADD COLUMN reminder_count INTEGER DEFAULT 0"))
+        except Exception as e:
+            print(f"[!] Schema migration note: {e}")
+

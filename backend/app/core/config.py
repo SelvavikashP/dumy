@@ -43,6 +43,18 @@ class Settings(BaseSettings):
         "python", "javascript", "typescript", "cpp", "c", "java", "go", "rust"
     ]
 
+    # Email & Gmail SMTP Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_NAME: str = "EvalAI Assessment Platform"
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_TLS: bool = True
+    EMAIL_VERIFICATION_ENABLED: bool = True
+    OTP_EXPIRE_MINUTES: int = 15
+    FRONTEND_URL: str = "http://localhost:5173"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

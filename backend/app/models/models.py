@@ -222,6 +222,8 @@ class AssessmentInvitation(Base):
     invitation_token = Column(String(255), unique=True, index=True, nullable=False)
     status = Column(String(50), default="INVITED", nullable=False) # INVITED, ACCEPTED, EXPIRED
     expires_at = Column(DateTime, nullable=True)
+    last_reminder_sent_at = Column(DateTime, nullable=True)
+    reminder_count = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=now_utc, nullable=False)
 
     assessment = relationship("Assessment", back_populates="invitations")
@@ -442,3 +444,16 @@ class PlatformSetting(Base):
     description = Column(Text, nullable=True)
     updated_by = Column(String(36), nullable=True)
     updated_at = Column(DateTime, default=now_utc, onupdate=now_utc, nullable=False)
+
+class EmailVerificationToken(Base):
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    email = Column(String(255), index=True, nullable=False)
+    user_id = Column(String(36), nullable=True)
+    otp_code = Column(String(10), nullable=False)
+    token_type = Column(String(50), default="REGISTRATION_OTP", nullable=False) # REGISTRATION_OTP, VERIFICATION, PASSWORD_RESET
+    is_used = Column(Boolean, default=False, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=now_utc, nullable=False)
+

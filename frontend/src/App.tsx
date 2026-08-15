@@ -32,6 +32,7 @@ import { ResultSummaryPage } from './pages/ResultSummaryPage';
 import { SuspensionScreen } from './pages/SuspensionScreen';
 import { ReattemptRequestPage } from './pages/ReattemptRequestPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { CertificateVerificationPage } from './pages/CertificateVerificationPage';
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
@@ -42,7 +43,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-900 text-slate-400 font-mono text-xs">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#070a13] text-slate-500 dark:text-slate-400 font-mono text-xs">
         Authenticating session...
       </div>
     );
@@ -61,10 +62,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: strin
   return <>{children}</>;
 };
 
+// Smart Settings Route Redirector
+const SettingsRedirect: React.FC = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'PORTAL_ADMIN') return <Navigate to="/portal-admin/settings" replace />;
+  return <Navigate to="/profile" replace />;
+};
+
 // Layout with Nav & Sidebar
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0b0f19] dark:bg-[#0b0f19] light:bg-[#f8fafc] text-slate-100 dark:text-slate-100 light:text-slate-900 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <Navbar />
       <div className="flex-1 flex">
         <Sidebar />
@@ -85,7 +94,7 @@ export const App: React.FC = () => {
           <Route
             path="/"
             element={
-              <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+              <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                 <Navbar />
                 <main className="flex-1">
                   <LandingPage />
@@ -97,7 +106,7 @@ export const App: React.FC = () => {
           <Route
             path="/setup"
             element={
-              <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+              <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                 <Navbar />
                 <main className="flex-1">
                   <SetupPage />
@@ -109,7 +118,7 @@ export const App: React.FC = () => {
           <Route
             path="/login"
             element={
-              <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+              <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                 <Navbar />
                 <main className="flex-1">
                   <LoginPage />
@@ -121,10 +130,22 @@ export const App: React.FC = () => {
           <Route
             path="/register"
             element={
-              <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+              <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                 <Navbar />
                 <main className="flex-1">
                   <RegisterPage />
+                </main>
+                <Footer />
+              </div>
+            }
+          />
+          <Route
+            path="/verify/:certificateId"
+            element={
+              <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
+                <Navbar />
+                <main className="flex-1">
+                  <CertificateVerificationPage />
                 </main>
                 <Footer />
               </div>
@@ -290,7 +311,7 @@ export const App: React.FC = () => {
             path="/assessment/:id/instructions"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+                <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                   <Navbar />
                   <main className="flex-1">
                     <AssessmentInstructions />
@@ -304,7 +325,7 @@ export const App: React.FC = () => {
             path="/assessment/:id/system-check"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+                <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                   <Navbar />
                   <main className="flex-1">
                     <SystemCheckPage />
@@ -326,7 +347,7 @@ export const App: React.FC = () => {
             path="/assessment/:id/result"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+                <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                   <Navbar />
                   <main className="flex-1">
                     <ResultSummaryPage />
@@ -340,7 +361,7 @@ export const App: React.FC = () => {
             path="/assessment/:id/suspended"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+                <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                   <Navbar />
                   <main className="flex-1">
                     <SuspensionScreen />
@@ -354,7 +375,7 @@ export const App: React.FC = () => {
             path="/assessment/:id/reattempt"
             element={
               <ProtectedRoute>
-                <div className="min-h-screen flex flex-col bg-[#0b0f19]">
+                <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070a13] text-slate-900 dark:text-slate-100 transition-colors duration-200">
                   <Navbar />
                   <main className="flex-1">
                     <ReattemptRequestPage />
@@ -365,7 +386,7 @@ export const App: React.FC = () => {
             }
           />
 
-          {/* User Profile Editing Route */}
+          {/* User Profile & Account Settings Route */}
           <Route
             path="/profile"
             element={
@@ -373,6 +394,16 @@ export const App: React.FC = () => {
                 <DashboardLayout>
                   <ProfilePage />
                 </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Global /settings Route */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsRedirect />
               </ProtectedRoute>
             }
           />

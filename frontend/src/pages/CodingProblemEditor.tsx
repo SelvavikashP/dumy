@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { ProblemTemplateModal } from '../components/ProblemTemplateModal';
 import { 
   Code2, 
   Plus, 
@@ -9,12 +10,14 @@ import {
   AlertCircle, 
   Play, 
   Save, 
-  FileCode,
-  Sparkles
+  FileCode, 
+  Sparkles, 
+  BookOpen 
 } from 'lucide-react';
 
 export const CodingProblemEditor: React.FC = () => {
   const navigate = useNavigate();
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
   const [title, setTitle] = useState<string>('Longest Increasing Subsequence Length');
   const [difficulty, setDifficulty] = useState<string>('MEDIUM');
   const [statement, setStatement] = useState<string>(
@@ -41,6 +44,26 @@ export const CodingProblemEditor: React.FC = () => {
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [validationResult, setValidationResult] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  const handleSelectTemplate = (tmpl: any) => {
+    setTitle(tmpl.title);
+    setDifficulty(tmpl.difficulty);
+    setStatement(tmpl.statement);
+    setInputFormat(tmpl.input_format);
+    setOutputFormat(tmpl.output_format);
+    setConstraints(tmpl.constraints);
+    setTimeLimit(tmpl.time_limit_sec || 2.0);
+    setMemoryLimit(tmpl.memory_limit_mb || 256);
+    if (tmpl.tags && Array.isArray(tmpl.tags)) {
+      setTags(tmpl.tags.join(', '));
+    }
+    if (tmpl.reference_solution) {
+      setReferenceSolution(tmpl.reference_solution);
+    }
+    if (tmpl.test_cases && Array.isArray(tmpl.test_cases)) {
+      setTestCases(tmpl.test_cases);
+    }
+  };
 
   const addTestCase = () => {
     setTestCases((prev) => [
@@ -77,23 +100,16 @@ export const CodingProblemEditor: React.FC = () => {
     try {
       await api.createQuestion({
         type: 'CODING',
+        question_text: statement,
         topic: tags.split(',')[0]?.trim() || 'Algorithms',
-        skill: 'Data Structures & Algorithms',
         difficulty,
-        problem_statement: statement,
-        points: 10.0,
-        negative_points: 0.0,
-        coding_problem: {
+        points: 20.0,
+        coding_details: {
           title,
-          statement,
+          problem_statement: statement,
           input_format: inputFormat,
           output_format: outputFormat,
           constraints,
-          examples: [{ input: testCases[0]?.input_data || '', output: testCases[0]?.expected_output || '' }],
-          default_code: {
-            python: 'import sys\n\ndef solve():\n    # Write your solution here\n    pass\n\nif __name__ == "__main__":\n    solve()'
-          },
-          reference_solution: referenceSolution,
           time_limit_seconds: timeLimit,
           memory_limit_mb: memoryLimit,
           supported_languages: ['python', 'javascript', 'cpp', 'java'],
@@ -111,62 +127,73 @@ export const CodingProblemEditor: React.FC = () => {
   };
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-6 font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-mono text-accent-cyan uppercase tracking-wider mb-1">
+          <div className="flex items-center space-x-2 text-xs font-mono text-cyan-600 dark:text-accent-cyan uppercase tracking-wider mb-1 font-semibold">
             <Code2 className="w-4 h-4" />
             <span>Competitive Programming Authoring Studio</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Coding Problem Studio</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Coding Problem Studio</h1>
         </div>
 
-        <button
-          type="button"
-          onClick={handleValidate}
-          disabled={isValidating}
-          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-brand-300 border border-brand-800/50 text-xs font-mono flex items-center space-x-2 transition disabled:opacity-50"
-        >
-          <Play className="w-3.5 h-3.5 text-accent-emerald fill-accent-emerald" />
-          <span>{isValidating ? 'Validating Solution...' : 'Test Reference Solution'}</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={() => setIsTemplateModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-cyan hover:from-brand-500 hover:to-cyan-400 text-white text-xs font-sans font-semibold flex items-center space-x-2 shadow-lg shadow-brand-600/20 transition"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-200" />
+            <span>Browse Template Catalog</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleValidate}
+            disabled={isValidating}
+            className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-brand-700 dark:text-brand-300 border border-brand-300 dark:border-brand-800/50 text-xs font-mono flex items-center space-x-2 transition shadow-sm disabled:opacity-50"
+          >
+            <Play className="w-3.5 h-3.5 text-emerald-600 dark:text-accent-emerald fill-emerald-600 dark:fill-accent-emerald" />
+            <span>{isValidating ? 'Validating...' : 'Test Reference Solution'}</span>
+          </button>
+        </div>
       </div>
 
       {validationResult && (
-        <div className="p-4 rounded-xl glass-card border border-slate-800 flex items-center justify-between text-xs font-mono">
+        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/40 flex items-center justify-between text-xs font-mono">
           <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span className="text-emerald-300 font-bold">Judge Sandbox Verification Succeeded</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-emerald-800 dark:text-emerald-300 font-bold">Judge Sandbox Verification Succeeded</span>
           </div>
-          <span className="text-slate-400">Execution time: {validationResult.execution_time_ms} ms</span>
+          <span className="text-slate-600 dark:text-slate-400">Execution time: {validationResult.execution_time_ms} ms</span>
         </div>
       )}
 
       <form onSubmit={handleSave} className="space-y-6 text-xs font-mono">
         {/* Meta Info */}
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-sm font-bold text-white font-sans border-b border-slate-800 pb-3">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white font-sans border-b border-slate-200 dark:border-slate-800 pb-3">
             Problem Specification
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-slate-300 font-semibold mb-1">Problem Title</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Problem Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Difficulty</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Difficulty</label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               >
                 <option value="EASY">EASY</option>
                 <option value="MEDIUM">MEDIUM</option>
@@ -176,72 +203,72 @@ export const CodingProblemEditor: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Problem Statement</label>
+            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Problem Statement</label>
             <textarea
               value={statement}
               onChange={(e) => setStatement(e.target.value)}
               rows={4}
               required
-              className="w-full p-3 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs leading-relaxed"
+              className="w-full p-3 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs leading-relaxed shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Input Format</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Input Format</label>
               <textarea
                 value={inputFormat}
                 onChange={(e) => setInputFormat(e.target.value)}
                 rows={2}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 text-xs shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Output Format</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Output Format</label>
               <textarea
                 value={outputFormat}
                 onChange={(e) => setOutputFormat(e.target.value)}
                 rows={2}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 text-xs"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 text-xs shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Constraints</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Constraints</label>
               <input
                 type="text"
                 value={constraints}
                 onChange={(e) => setConstraints(e.target.value)}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Time Limit (Seconds)</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Time Limit (Seconds)</label>
               <input
                 type="number"
                 step="0.5"
                 value={timeLimit}
                 onChange={(e) => setTimeLimit(parseFloat(e.target.value))}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Topic Tags (comma-separated)</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Topic Tags (comma-separated)</label>
               <input
                 type="text"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
               />
             </div>
           </div>
         </div>
 
         {/* Reference Solution */}
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
-          <label className="block text-slate-200 font-bold font-sans">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+          <label className="block text-slate-900 dark:text-slate-200 font-bold font-sans">
             Reference Solution (Python 3) &mdash; Auto-tested against test cases
           </label>
           <textarea
@@ -249,20 +276,20 @@ export const CodingProblemEditor: React.FC = () => {
             onChange={(e) => setReferenceSolution(e.target.value)}
             rows={8}
             required
-            className="w-full p-3 bg-[#1e1e1e] border border-slate-800 rounded-xl text-brand-300 font-mono text-xs focus:outline-none focus:border-brand-500"
+            className="w-full p-3 bg-slate-900 dark:bg-[#1e1e1e] border border-slate-800 rounded-xl text-brand-300 font-mono text-xs focus:outline-none focus:border-brand-500 shadow-inner"
           />
         </div>
 
         {/* Test Cases */}
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-white font-sans">
+        <div className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white font-sans">
               Test Cases ({testCases.length}) &bull; Public Samples &amp; Hidden Tests
             </h3>
             <button
               type="button"
               onClick={addTestCase}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-brand-300 border border-brand-800/40 text-xs font-mono flex items-center space-x-1.5 transition"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-brand-700 dark:text-brand-300 border border-slate-300 dark:border-brand-800/40 text-xs font-mono flex items-center space-x-1.5 transition shadow-sm"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Test Case</span>
@@ -271,10 +298,10 @@ export const CodingProblemEditor: React.FC = () => {
 
           <div className="space-y-3">
             {testCases.map((tc, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-surface-850 border border-slate-800 space-y-3">
+              <div key={idx} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-850 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between text-[11px] font-mono">
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-white">Test Case #{idx + 1}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Test Case #{idx + 1}</span>
                     <label className="flex items-center space-x-1.5 cursor-pointer ml-3">
                       <input
                         type="checkbox"
@@ -284,9 +311,9 @@ export const CodingProblemEditor: React.FC = () => {
                           next[idx].is_hidden = e.target.checked;
                           setTestCases(next);
                         }}
-                        className="w-3.5 h-3.5 text-brand-600 rounded bg-surface-900 border-slate-700"
+                        className="w-3.5 h-3.5 text-brand-600 rounded bg-white dark:bg-surface-900 border-slate-300 dark:border-slate-700"
                       />
-                      <span className="text-slate-400">Hidden from Candidate</span>
+                      <span className="text-slate-600 dark:text-slate-400">Hidden from Candidate</span>
                     </label>
                   </div>
 
@@ -294,7 +321,7 @@ export const CodingProblemEditor: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => removeTestCase(idx)}
-                      className="text-rose-400 hover:text-rose-300"
+                      className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -303,7 +330,7 @@ export const CodingProblemEditor: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-slate-400 uppercase">Input Data (stdin)</label>
+                    <label className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-semibold">Input Data (stdin)</label>
                     <textarea
                       value={tc.input_data}
                       onChange={(e) => {
@@ -313,12 +340,12 @@ export const CodingProblemEditor: React.FC = () => {
                       }}
                       rows={2}
                       required
-                      className="w-full mt-1 p-2 bg-surface-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-brand-500 font-mono"
+                      className="w-full mt-1 p-2 bg-white dark:bg-surface-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-xs focus:outline-none focus:border-brand-500 font-mono shadow-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-slate-400 uppercase">Expected Output (stdout)</label>
+                    <label className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-semibold">Expected Output (stdout)</label>
                     <textarea
                       value={tc.expected_output}
                       onChange={(e) => {
@@ -328,7 +355,7 @@ export const CodingProblemEditor: React.FC = () => {
                       }}
                       rows={2}
                       required
-                      className="w-full mt-1 p-2 bg-surface-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-brand-500 font-mono"
+                      className="w-full mt-1 p-2 bg-white dark:bg-surface-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-xs focus:outline-none focus:border-brand-500 font-mono shadow-sm"
                     />
                   </div>
                 </div>
@@ -349,6 +376,13 @@ export const CodingProblemEditor: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Problem Template Catalog Modal */}
+      <ProblemTemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
     </div>
   );
 };

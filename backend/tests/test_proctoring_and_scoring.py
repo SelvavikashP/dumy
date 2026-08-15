@@ -1,16 +1,29 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.core.database import init_db
+from seed_data import seed
+
+@pytest_asyncio.fixture(autouse=True)
+async def setup_test_db():
+    await init_db()
+    try:
+        await seed()
+    except Exception:
+        pass
 
 @pytest.mark.asyncio
 async def test_attempt_lifecycle_and_proctoring_warnings():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Candidate login
-        c_login = await client.post("/api/v1/auth/login", json={
-            "email": "candidate@example.com",
+        import uuid
+        test_email = f"proc_cand_{uuid.uuid4().hex[:8]}@example.com"
+        reg_res = await client.post("/api/v1/auth/register", json={
+            "full_name": "Proctor Test Candidate",
+            "email": test_email,
             "password": "Candidate@12345"
         })
-        token = c_login.json()["access_token"]
+        token = reg_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         # Get assigned assessments

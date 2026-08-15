@@ -62,32 +62,32 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 font-sans">
       <div className="w-full max-w-md">
         
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-cyan p-0.5 mx-auto mb-3 shadow-xl shadow-brand-500/20">
-            <div className="w-full h-full bg-surface-900 rounded-[14px] flex items-center justify-center">
-              <BrainCircuit className="w-7 h-7 text-brand-400" />
+            <div className="w-full h-full bg-slate-50 dark:bg-surface-900 rounded-[14px] flex items-center justify-center">
+              <BrainCircuit className="w-7 h-7 text-brand-600 dark:text-brand-400" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white dark:text-white light:text-slate-900 tracking-tight">Sign In to EvalAI Pro</h2>
-          <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Sign In to EvalAI Pro</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Access your secure assessment studio or testing room.
           </p>
         </div>
 
         {/* Quick Demo Switchers for Reviewer Ease */}
-        <div className="mb-6 p-3 rounded-xl bg-surface-850/90 dark:bg-surface-850/90 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-400 light:text-slate-500 uppercase tracking-wider mb-2 font-mono text-center">
+        <div className="mb-6 p-3 rounded-xl bg-slate-50 dark:bg-surface-850/90 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 font-mono text-center">
             &mdash; Quick-Fill Demo Credentials &mdash;
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setDemoCredentials('ADMIN')}
-              className="px-2 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-800 light:bg-purple-50 hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-purple-100 border border-slate-700 dark:border-slate-700 light:border-purple-200 text-purple-300 dark:text-purple-300 light:text-purple-700 font-mono text-[11px] flex items-center justify-center space-x-1 transition"
+              className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-purple-200 dark:border-slate-700 text-purple-700 dark:text-purple-300 font-mono text-[11px] flex items-center justify-center space-x-1 transition shadow-sm font-semibold"
             >
               <ShieldCheck className="w-3 h-3" />
               <span>Admin</span>
@@ -95,7 +95,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setDemoCredentials('CREATOR')}
-              className="px-2 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-800 light:bg-indigo-50 hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-indigo-100 border border-slate-700 dark:border-slate-700 light:border-indigo-200 text-brand-300 dark:text-brand-300 light:text-brand-700 font-mono text-[11px] flex items-center justify-center space-x-1 transition"
+              className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-indigo-200 dark:border-slate-700 text-brand-700 dark:text-brand-300 font-mono text-[11px] flex items-center justify-center space-x-1 transition shadow-sm font-semibold"
             >
               <Terminal className="w-3 h-3" />
               <span>Creator</span>
@@ -103,7 +103,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setDemoCredentials('CANDIDATE')}
-              className="px-2 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-800 light:bg-emerald-50 hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-emerald-100 border border-slate-700 dark:border-slate-700 light:border-emerald-200 text-emerald-300 dark:text-emerald-300 light:text-emerald-700 font-mono text-[11px] flex items-center justify-center space-x-1 transition"
+              className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-emerald-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-300 font-mono text-[11px] flex items-center justify-center space-x-1 transition shadow-sm font-semibold"
             >
               <UserCheck className="w-3 h-3" />
               <span>Candidate</span>
@@ -112,34 +112,34 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Login Box */}
-        <div className="glass-panel p-8 rounded-2xl border border-slate-800 dark:border-slate-800 light:border-slate-200 shadow-2xl">
+        <div className="glass-panel p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl">
           {error && (
-            <div className="p-3 mb-6 bg-rose-950/40 dark:bg-rose-950/40 light:bg-rose-50 border border-rose-800/60 dark:border-rose-800/60 light:border-rose-200 rounded-xl text-rose-300 dark:text-rose-300 light:text-rose-700 text-xs flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+            <div className="p-3 mb-6 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4 text-xs font-mono">
             <div>
-              <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-semibold mb-1">Email Address</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Email Address</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="name@company.com"
-                  className="w-full pl-9 pr-3 py-2.5 bg-surface-850 dark:bg-surface-850 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-slate-100 dark:text-slate-100 light:text-slate-900 text-xs focus:outline-none focus:border-brand-500"
+                  className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-brand-500 shadow-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-300 dark:text-slate-300 light:text-slate-700 font-semibold mb-1">Password</label>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Password</label>
               <div className="relative flex items-center">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 pointer-events-none" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -147,17 +147,17 @@ export const LoginPage: React.FC = () => {
                   required
                   autoComplete="current-password"
                   placeholder="Enter password..."
-                  className="w-full pl-9 pr-10 py-2.5 bg-surface-850 dark:bg-surface-850 light:bg-slate-50 border border-slate-700 dark:border-slate-700 light:border-slate-300 rounded-xl text-slate-100 dark:text-slate-100 light:text-slate-900 text-xs focus:outline-none focus:border-brand-500"
+                  className="w-full pl-9 pr-10 py-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:border-brand-500 shadow-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-400 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-700 transition"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
                   title={showPassword ? 'Hide password' : 'Show password'}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-brand-400" />
+                    <EyeOff className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                   ) : (
                     <Eye className="w-4 h-4 text-slate-400" />
                   )}
@@ -175,10 +175,10 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800 dark:border-slate-800 light:border-slate-200 text-center text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 font-sans">
-            New candidate?{' '}
-            <Link to="/register" className="text-brand-400 hover:text-brand-300 dark:text-brand-400 light:text-brand-600 font-medium">
-              Create Candidate Account
+          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400 font-sans">
+            Need an account?{' '}
+            <Link to="/register" className="text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300 font-semibold">
+              Create Account (Student or Teacher)
             </Link>
           </div>
         </div>

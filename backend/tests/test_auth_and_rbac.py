@@ -3,10 +3,15 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 from app.core.database import init_db
+from seed_data import seed
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_test_db():
     await init_db()
+    try:
+        await seed()
+    except Exception:
+        pass
 
 @pytest.mark.asyncio
 async def test_setup_check_and_health():

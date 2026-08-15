@@ -12,9 +12,11 @@ from app.models.models import (
 )
 from app.schemas.schemas import (
     CreatorCreateRequest, CreatorUpdateRequest,
-    PlatformSettingUpdate, ExternalPlatformUpdate
+    PlatformSettingUpdate, ExternalPlatformUpdate,
+    EmailSettingsSchema, TestEmailRequest
 )
 from app.services.platform_adapters.adapters import PlatformAdapterRegistry
+from app.services.email_service import EmailService
 
 router = APIRouter(prefix="/admin", tags=["Portal Admin Operations"])
 
@@ -225,6 +227,120 @@ async def update_platform_setting(
     )
     await db.commit()
     return {"message": f"Setting '{req.setting_key}' updated successfully"}
+
+# ----------------- Gmail & SMTP Configuration -----------------
+
+@router.get("/email-settings")
+async def get_email_settings(
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieves current Gmail / SMTP configuration with safe password masking."""
+    cfg = await EmailService.get_smtp_config(db)
+    pwd = cfg.get("password", "")
+    masked_pwd = ("*" * 10) if pwd else ""
+    return {
+        "host": cfg.get("host", "smtp.gmail.com"),
+        "port": cfg.get("port", 587),
+        "user": cfg.get("user", ""),
+        "password_masked": masked_pwd,
+        "is_configured": cfg.get("is_configured", False),
+        "from_name": cfg.get("from_name", "EvalAI Assessment Platform"),
+        "from_email": cfg.get("from_email", ""),
+        "use_tls": cfg.get("use_tls", True),
+        "frontend_url": cfg.get("frontend_url", "http://localhost:5173")
+    }
+
+@router.post("/email-settings")
+async def update_email_settings(
+    req: EmailSettingsSchema,
+    request: Request,
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Persists Gmail / SMTP credentials and settings to database platform storage."""
+    # Retrieve existing settings to keep password if omitted
+    existing_cfg = await EmailService.get_smtp_config(db)
+    password_to_save = req.password if req.password and req.password.strip() and req.password != ("*" * 10) else existing_cfg.get("password", "")
+
+    setting_val = {
+        "host": req.host,
+        "port": req.port,
+        "user": req.user,
+        "password": password_to_save,
+        "from_name": req.from_name,
+        "from_email": req.from_email or req.user,
+        "use_tls": req.use_tls,
+        "frontend_url": req.frontend_url
+    }
+
+    res = await db.execute(select(PlatformSetting).where(PlatformSetting.setting_key == "email_smtp_config"))
+    setting = res.scalars().first()
+    if not setting:
+        setting = PlatformSetting(
+            setting_key="email_smtp_config",
+            setting_value_json=setting_val,
+            description="Gmail & SMTP configuration for system notifications and verification",
+            updated_by=admin.id
+        )
+        db.add(setting)
+    else:
+        setting.setting_value_json = setting_val
+        setting.updated_by = admin.id
+
+    await log_audit_event(
+        db=db,
+        action="EMAIL_SETTINGS_UPDATED",
+        user_id=admin.id,
+        user_role="PORTAL_ADMIN",
+        target_type="PlatformSetting",
+        target_id="email_smtp_config",
+        ip_address=request.client.host if request.client else None,
+        details={"user": req.user, "host": req.host, "port": req.port}
+    )
+    await db.commit()
+
+    return {"message": "Gmail & SMTP configuration updated successfully!"}
+
+@router.post("/test-email")
+async def send_test_email(
+    req: TestEmailRequest,
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Sends a test probe email to verify Gmail credentials and SMTP delivery."""
+    cfg = await EmailService.get_smtp_config(db)
+    subject = req.subject or "🧠 EvalAI — Gmail SMTP Diagnostic Probe"
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: sans-serif; background-color: #0b0f17; color: #e2e8f0; padding: 24px;">
+      <div style="max-width: 500px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 24px;">
+        <h2 style="color: #38bdf8; margin-top: 0;">✅ Gmail SMTP Probe Successful!</h2>
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+          Your EvalAI assessment platform has successfully connected to <strong>{cfg['host']}:{cfg['port']}</strong> and authenticated with sender <strong>{cfg['from_email'] or cfg['user']}</strong>.
+        </p>
+        <div style="background: #1e293b; padding: 12px; border-radius: 8px; font-size: 12px; font-family: monospace; color: #a5f3fc;">
+          {req.custom_message or 'All system reminder and OTP verification emails are ready to dispatch.'}
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-top: 20px; text-align: center;">
+          EvalAI Portal Diagnostics • Delivered to {req.to_email}
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+    plain_content = f"EvalAI Gmail SMTP Probe: Connected to {cfg['host']}:{cfg['port']}. Diagnostic success."
+
+    res = await EmailService.send_raw_email(
+        to_email=req.to_email,
+        subject=subject,
+        html_body=html_content,
+        plain_body=plain_content,
+        db=db
+    )
+    return res
+
 
 # ----------------- External Coding Platforms -----------------
 

@@ -38,36 +38,36 @@ export const ReattemptRequestPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg glass-panel p-8 rounded-2xl border border-slate-800 shadow-2xl space-y-6">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 font-sans">
+      <div className="w-full max-w-lg glass-panel p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6">
         
-        <div className="flex items-center space-x-3 pb-4 border-b border-slate-800">
-          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <div className="flex items-center space-x-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/20">
             <RotateCcw className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Request Assessment Reattempt</h2>
-            <p className="text-xs text-slate-400 font-mono">Attempt Ref: {attemptId.substring(0, 8) || 'N/A'}</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Request Assessment Reattempt</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">Attempt Ref: {attemptId.substring(0, 8) || 'N/A'}</p>
           </div>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-950/40 border border-rose-800/60 rounded-xl text-rose-300 text-xs flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
             <span>{error}</span>
           </div>
         )}
 
         {statusMsg ? (
-          <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs text-center space-y-2">
-            <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs text-center space-y-2">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto" />
             <p className="font-semibold">{statusMsg}</p>
-            <p className="text-slate-400">Redirecting to candidate dashboard...</p>
+            <p className="text-slate-500 dark:text-slate-400">Redirecting to candidate dashboard...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">
                 Contextual Justification / Reason for Reattempt
               </label>
               <textarea
@@ -75,17 +75,17 @@ export const ReattemptRequestPage: React.FC = () => {
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
                 required
-                className="w-full p-3 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 font-sans text-xs focus:outline-none focus:border-brand-500 leading-relaxed"
+                className="w-full p-3 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-sans text-xs focus:outline-none focus:border-brand-500 leading-relaxed shadow-sm"
                 placeholder="Explain the circumstance (e.g. system disconnect, power interruption)..."
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-900 border border-slate-800 text-[11px] text-slate-400 font-sans leading-relaxed">
-              <strong>Policy Note:</strong> If approved by the recruiter, a new clean attempt record will be generated. Past attempt logs remain permanently archived in compliance records.
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 font-sans leading-relaxed">
+              <strong className="text-slate-900 dark:text-slate-200">Policy Note:</strong> If approved by the recruiter, a new clean attempt record will be generated. Past attempt logs remain permanently archived in compliance records.
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-              <Link to="/dashboard" className="text-slate-400 hover:text-white flex items-center space-x-1 font-mono text-xs">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+              <Link to="/dashboard" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1 font-mono text-xs">
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Cancel</span>
               </Link>

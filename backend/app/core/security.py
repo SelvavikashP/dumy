@@ -112,7 +112,7 @@ async def require_test_attender(current_auth: dict = Depends(get_current_user)):
 def require_creator_permission(permission_name: str):
     async def permission_checker(current_auth: dict = Depends(require_test_creator), db: AsyncSession = Depends(get_db)):
         if current_auth["role"] == "PORTAL_ADMIN":
-            return current_auth["user"]
+            return current_auth
         
         from app.models.models import CreatorPermission
         res = await db.execute(
@@ -128,5 +128,6 @@ def require_creator_permission(permission_name: str):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Test Creator lacks required permission: {permission_name}"
             )
-        return current_auth["user"]
+        return current_auth
     return permission_checker
+

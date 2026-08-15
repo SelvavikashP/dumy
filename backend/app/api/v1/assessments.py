@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,10 @@ from app.models.models import (
     CodingProblem, CodingTestCase, AssessmentInvitation,
     TestAttender
 )
-from app.schemas.schemas import AssessmentCreate, AssessmentResponse
+from app.schemas.schemas import (
+    AssessmentCreate, AssessmentResponse, SendReminderRequest, InvitationItemResponse
+)
+from app.services.email_service import EmailService
 
 router = APIRouter(prefix="/assessments", tags=["Assessments"])
 
@@ -324,39 +327,246 @@ async def invite_candidates(
     assessment_id: str,
     emails: List[str],
     request: Request,
-    current_auth: dict = Depends(require_creator_permission("MANAGE_CANDIDATES")),
+    current_user: Any = Depends(require_creator_permission("MANAGE_CANDIDATES")),
     db: AsyncSession = Depends(get_db)
 ):
+    """Invites candidates by email, creates unique access tokens, and dispatches Gmail invitation emails."""
     res = await db.execute(select(Assessment).where(Assessment.id == assessment_id))
     assessment = res.scalars().first()
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
     invited_count = 0
+    invitations_to_send = []
+
     for em in emails:
         clean_email = em.lower().strip()
+        if not clean_email:
+            continue
         att_res = await db.execute(select(TestAttender).where(TestAttender.email == clean_email))
         attender = att_res.scalars().first()
 
+        inv_token = str(uuid.uuid4())
         inv = AssessmentInvitation(
             assessment_id=assessment.id,
             attender_id=attender.id if attender else None,
             email=clean_email,
-            invitation_token=str(uuid.uuid4()),
-            status="INVITED"
+            invitation_token=inv_token,
+            status="INVITED",
+            reminder_count=0
         )
         db.add(inv)
         invited_count += 1
+        invitations_to_send.append({
+            "email": clean_email,
+            "candidate_name": attender.full_name if attender else "Candidate",
+            "token": inv_token
+        })
 
+    user_id = current_user.id if hasattr(current_user, "id") else str(current_user)
     await log_audit_event(
         db=db,
         action="CANDIDATES_INVITED",
-        user_id=current_auth["user_id"],
-        user_role=current_auth["role"],
+        user_id=user_id,
+        user_role="TEST_CREATOR",
         target_type="Assessment",
         target_id=assessment.id,
         ip_address=request.client.host if request.client else None,
         details={"emails_count": len(emails)}
     )
     await db.commit()
-    return {"message": f"Successfully invited {invited_count} candidate(s)"}
+
+    # Asynchronously dispatch invitation emails via Gmail / SMTP service
+    for item in invitations_to_send:
+        try:
+            await EmailService.send_assessment_invitation(
+                email=item["email"],
+                candidate_name=item["candidate_name"],
+                assessment_title=assessment.title,
+                assessment_id=assessment.id,
+                duration_minutes=assessment.duration_minutes,
+                passing_percentage=assessment.passing_percentage,
+                instructions=assessment.instructions,
+                invitation_token=item["token"],
+                db=db
+            )
+        except Exception as e:
+            print(f"[!] Email invitation dispatch error for {item['email']}: {e}")
+
+    return {"message": f"Successfully invited and emailed {invited_count} candidate(s)"}
+
+@router.get("/{assessment_id}/invitations", response_model=List[InvitationItemResponse])
+async def list_assessment_invitations(
+    assessment_id: str,
+    current_user: Any = Depends(require_creator_permission("MANAGE_CANDIDATES")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Lists all candidate invitations with delivery & reminder history for an assessment."""
+    res = await db.execute(
+        select(AssessmentInvitation)
+        .where(AssessmentInvitation.assessment_id == assessment_id)
+        .order_by(AssessmentInvitation.created_at.desc())
+    )
+    invs = res.scalars().all()
+    output = []
+    for inv in invs:
+        cand_name = None
+        if inv.attender_id:
+            att_res = await db.execute(select(TestAttender).where(TestAttender.id == inv.attender_id))
+            att = att_res.scalars().first()
+            if att:
+                cand_name = att.full_name
+        output.append(InvitationItemResponse(
+            id=inv.id,
+            assessment_id=inv.assessment_id,
+            email=inv.email,
+            candidate_name=cand_name,
+            status=inv.status,
+            invitation_token=inv.invitation_token,
+            reminder_count=inv.reminder_count or 0,
+            last_reminder_sent_at=inv.last_reminder_sent_at,
+            created_at=inv.created_at
+        ))
+    return output
+
+@router.post("/{assessment_id}/send-reminders")
+async def send_assessment_reminders(
+    assessment_id: str,
+    req: Optional[SendReminderRequest] = None,
+    request: Request = None,
+    current_user: Any = Depends(require_creator_permission("MANAGE_CANDIDATES")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Dispatches assessment reminder emails to pending or invited candidates."""
+    res = await db.execute(select(Assessment).where(Assessment.id == assessment_id))
+    assessment = res.scalars().first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    query = select(AssessmentInvitation).where(
+        AssessmentInvitation.assessment_id == assessment_id,
+        AssessmentInvitation.status == "INVITED"
+    )
+    if req and req.invitation_ids:
+        query = query.where(AssessmentInvitation.id.in_(req.invitation_ids))
+
+    inv_res = await db.execute(query)
+    invitations = inv_res.scalars().all()
+
+    if not invitations:
+        return {"message": "No eligible pending candidate invitations found to remind.", "sent_count": 0}
+
+    sent_count = 0
+    now = datetime.now(timezone.utc)
+
+    for inv in invitations:
+        cand_name = "Candidate"
+        if inv.attender_id:
+            att_res = await db.execute(select(TestAttender).where(TestAttender.id == inv.attender_id))
+            att = att_res.scalars().first()
+            if att:
+                cand_name = att.full_name
+
+        inv.reminder_count = (inv.reminder_count or 0) + 1
+        inv.last_reminder_sent_at = now
+        sent_count += 1
+
+        try:
+            await EmailService.send_assessment_reminder(
+                email=inv.email,
+                candidate_name=cand_name,
+                assessment_title=assessment.title,
+                assessment_id=assessment.id,
+                duration_minutes=assessment.duration_minutes,
+                passing_percentage=assessment.passing_percentage,
+                invitation_token=inv.invitation_token,
+                reminder_index=inv.reminder_count,
+                db=db
+            )
+        except Exception as e:
+            print(f"[!] Email reminder dispatch error for {inv.email}: {e}")
+
+    user_id = current_user.id if hasattr(current_user, "id") else str(current_user)
+    await log_audit_event(
+        db=db,
+        action="ASSESSMENT_REMINDERS_SENT",
+        user_id=user_id,
+        user_role="TEST_CREATOR",
+        target_type="Assessment",
+        target_id=assessment.id,
+        ip_address=request.client.host if request and request.client else None,
+        details={"reminders_sent_count": sent_count}
+    )
+    await db.commit()
+
+    return {
+        "message": f"Successfully sent assessment reminders to {sent_count} candidate(s)",
+        "sent_count": sent_count
+    }
+
+@router.post("/{assessment_id}/remind/{invitation_id}")
+async def remind_single_candidate(
+    assessment_id: str,
+    invitation_id: str,
+    request: Request = None,
+    current_user: Any = Depends(require_creator_permission("MANAGE_CANDIDATES")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Sends a personalized reminder email to a single candidate invitation."""
+    res = await db.execute(select(Assessment).where(Assessment.id == assessment_id))
+    assessment = res.scalars().first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    inv_res = await db.execute(
+        select(AssessmentInvitation).where(
+            AssessmentInvitation.id == invitation_id,
+            AssessmentInvitation.assessment_id == assessment_id
+        )
+    )
+    inv = inv_res.scalars().first()
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    cand_name = "Candidate"
+    if inv.attender_id:
+        att_res = await db.execute(select(TestAttender).where(TestAttender.id == inv.attender_id))
+        att = att_res.scalars().first()
+        if att:
+            cand_name = att.full_name
+
+    now = datetime.now(timezone.utc)
+    inv.reminder_count = (inv.reminder_count or 0) + 1
+    inv.last_reminder_sent_at = now
+
+    await EmailService.send_assessment_reminder(
+        email=inv.email,
+        candidate_name=cand_name,
+        assessment_title=assessment.title,
+        assessment_id=assessment.id,
+        duration_minutes=assessment.duration_minutes,
+        passing_percentage=assessment.passing_percentage,
+        invitation_token=inv.invitation_token,
+        reminder_index=inv.reminder_count,
+        db=db
+    )
+
+    user_id = current_user.id if hasattr(current_user, "id") else str(current_user)
+    await log_audit_event(
+        db=db,
+        action="CANDIDATE_REMINDER_SENT",
+        user_id=user_id,
+        user_role="TEST_CREATOR",
+        target_type="AssessmentInvitation",
+        target_id=inv.id,
+        ip_address=request.client.host if request and request.client else None,
+        details={"email": inv.email, "reminder_index": inv.reminder_count}
+    )
+    await db.commit()
+
+    return {
+        "message": f"Reminder email successfully sent to {inv.email}",
+        "reminder_count": inv.reminder_count,
+        "last_reminder_sent_at": inv.last_reminder_sent_at
+    }
+

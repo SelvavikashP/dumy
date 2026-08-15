@@ -90,29 +90,29 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-3xl p-6 rounded-2xl glass-panel border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
+      <div className="w-full max-w-3xl p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col justify-between">
         
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
             <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan text-white">
+              <div className="p-2 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan text-white shadow-md">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white leading-tight">AI Assessment Generator</h3>
-                <p className="text-xs text-slate-400 font-mono">DRAFT &rarr; REVIEW &rarr; APPROVED &rarr; PUBLISHED</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">AI Assessment Generator</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">DRAFT &rarr; REVIEW &rarr; APPROVED &rarr; PUBLISHED</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-white">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {error && (
-            <div className="p-3 mb-4 bg-rose-950/40 border border-rose-800/60 rounded-xl text-rose-300 text-xs flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+            <div className="p-3 mb-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
           )}
@@ -121,80 +121,80 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({ isOpen, onCl
           {!draft ? (
             <form onSubmit={handleGenerate} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Natural Language Assessment Prompt</label>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Natural Language Assessment Prompt</label>
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   rows={3}
                   required
-                  className="w-full p-3 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs leading-relaxed"
+                  className="w-full p-3 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 font-sans text-xs leading-relaxed shadow-sm"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Target Role</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Target Role</label>
                   <input
                     type="text"
                     value={jobRole}
                     onChange={(e) => setJobRole(e.target.value)}
-                    className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                    className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Experience Level</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Experience Level</label>
                   <input
                     type="text"
                     value={experienceLevel}
                     onChange={(e) => setExperienceLevel(e.target.value)}
-                    className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                    className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Duration (Mins)</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 font-sans">Duration (Mins)</label>
                   <input
                     type="number"
                     value={duration}
                     onChange={(e) => setDuration(parseInt(e.target.value))}
                     min={15}
                     max={180}
-                    className="w-full p-2.5 bg-surface-850 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500"
+                    className="w-full p-2.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-brand-500 shadow-sm"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 p-3 bg-surface-900 rounded-xl border border-slate-800 text-center">
+              <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-surface-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
                 <div>
-                  <label className="block text-slate-400 text-[11px] mb-1">Aptitude Qs</label>
+                  <label className="block text-slate-600 dark:text-slate-400 text-[11px] mb-1 font-sans font-semibold">Aptitude Qs</label>
                   <input
                     type="number"
                     value={aptitudeCount}
                     onChange={(e) => setAptitudeCount(parseInt(e.target.value))}
                     min={1}
                     max={10}
-                    className="w-full p-1.5 bg-surface-850 border border-slate-700 rounded-lg text-slate-100 text-center"
+                    className="w-full p-1.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 text-center shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 text-[11px] mb-1">MCQ Qs</label>
+                  <label className="block text-slate-600 dark:text-slate-400 text-[11px] mb-1 font-sans font-semibold">MCQ Qs</label>
                   <input
                     type="number"
                     value={mcqCount}
                     onChange={(e) => setMcqCount(parseInt(e.target.value))}
                     min={1}
                     max={10}
-                    className="w-full p-1.5 bg-surface-850 border border-slate-700 rounded-lg text-slate-100 text-center"
+                    className="w-full p-1.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 text-center shadow-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 text-[11px] mb-1">Coding Challenges</label>
+                  <label className="block text-slate-600 dark:text-slate-400 text-[11px] mb-1 font-sans font-semibold">Coding Challenges</label>
                   <input
                     type="number"
                     value={codingCount}
                     onChange={(e) => setCodingCount(parseInt(e.target.value))}
                     min={1}
                     max={5}
-                    className="w-full p-1.5 bg-surface-850 border border-slate-700 rounded-lg text-slate-100 text-center"
+                    className="w-full p-1.5 bg-white dark:bg-surface-850 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 text-center shadow-sm"
                   />
                 </div>
               </div>
@@ -211,18 +211,18 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({ isOpen, onCl
           ) : (
             /* Review Generated Draft */
             <div className="space-y-4 text-xs font-sans">
-              <div className="p-4 rounded-xl bg-surface-900 border border-slate-800">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-surface-900 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-white text-base">{draft.title}</h4>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px]">
+                  <h4 className="font-bold text-slate-900 dark:text-white text-base">{draft.title}</h4>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-mono text-[10px] font-bold">
                     {draft.validation_summary?.status || 'APPROVED'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-1">{draft.description}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{draft.description}</p>
                 
                 {draft.validation_summary && (
-                  <div className="mt-3 p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-emerald-300 text-xs font-mono flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                  <div className="mt-3 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 text-xs font-mono flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <span>{draft.validation_summary.test_case_validation}</span>
                   </div>
                 )}
@@ -230,25 +230,25 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({ isOpen, onCl
 
               {/* Sections Preview */}
               <div className="space-y-3">
-                <h5 className="font-bold text-slate-200 text-xs font-mono uppercase tracking-wider">
+                <h5 className="font-bold text-slate-800 dark:text-slate-200 text-xs font-mono uppercase tracking-wider">
                   Generated Sections &amp; Questions ({draft.sections.length} Sections)
                 </h5>
 
                 {draft.sections.map((sec: any, idx: number) => (
-                  <div key={idx} className="p-3.5 rounded-xl bg-surface-850 border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between font-mono font-bold text-slate-200 text-xs">
+                  <div key={idx} className="p-3.5 rounded-xl bg-white dark:bg-surface-850 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+                    <div className="flex items-center justify-between font-mono font-bold text-slate-900 dark:text-slate-200 text-xs">
                       <span>{sec.title}</span>
-                      <span className="text-slate-400 text-[11px]">{sec.questions.length} Questions</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-[11px] font-normal">{sec.questions.length} Questions</span>
                     </div>
 
                     <div className="space-y-1.5 pt-1">
                       {sec.questions.map((q: any, qIdx: number) => (
-                        <div key={qIdx} className="p-2 rounded-lg bg-surface-900 text-xs text-slate-300 flex items-center justify-between">
+                        <div key={qIdx} className="p-2 rounded-lg bg-slate-50 dark:bg-surface-900 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
                           <div className="flex items-center space-x-2 truncate">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-brand-300">{q.type}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[10px] font-mono text-brand-700 dark:text-brand-300 font-bold">{q.type}</span>
                             <span className="truncate max-w-md">{q.problem_statement || q.coding_problem?.title}</span>
                           </div>
-                          <span className="text-slate-400 font-mono text-[10px]">{q.points} pts</span>
+                          <span className="text-slate-500 dark:text-slate-400 font-mono text-[10px]">{q.points} pts</span>
                         </div>
                       ))}
                     </div>
@@ -256,11 +256,11 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({ isOpen, onCl
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setDraft(null)}
-                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white font-mono text-xs"
+                  className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-mono text-xs"
                 >
                   &larr; Re-generate Draft
                 </button>

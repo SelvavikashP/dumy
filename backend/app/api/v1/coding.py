@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
@@ -8,9 +9,11 @@ from app.models.models import (
 )
 from app.schemas.schemas import (
     CodeRunRequest, CodeRunResult, CodeSubmitRequest,
-    CodeSubmissionResponse
+    CodeSubmissionResponse, CodingProblemTemplateSummary,
+    CodingProblemTemplateDetail, SnippetResponse
 )
 from app.services.code_judge import CodeJudgeService
+from app.services.coding_templates import CodingTemplateService
 
 router = APIRouter(prefix="/coding", tags=["Coding Execution & Judge"])
 
@@ -161,3 +164,41 @@ async def submit_code(
         error_message=submission.error_message,
         test_results=submission.test_results_json
     )
+
+
+@router.get("/templates", response_model=List[CodingProblemTemplateSummary])
+async def list_coding_templates(
+    category: Optional[str] = Query(None, description="Filter by category"),
+    difficulty: Optional[str] = Query(None, description="Filter by difficulty (EASY, MEDIUM, HARD)")
+):
+    """
+    Returns built-in standard algorithmic problem templates library (Two Sum, Valid Parentheses, etc.)
+    with metadata, test case counts, and tags.
+    """
+    return CodingTemplateService.get_template_summaries(category=category, difficulty=difficulty)
+
+
+@router.get("/templates/{template_id}", response_model=CodingProblemTemplateDetail)
+async def get_coding_template_detail(template_id: str):
+    """
+    Returns full details for a problem template including problem statement markdown,
+    input/output formats, constraints, multi-language starter code, and verified test cases.
+    """
+    template = CodingTemplateService.get_template_detail(template_id)
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Coding problem template '{template_id}' not found"
+        )
+    return template
+
+
+@router.get("/snippets/{language}", response_model=SnippetResponse)
+async def get_language_starter_snippet(language: str):
+    """
+    Returns standard I/O and algorithm starter skeleton for the specified language
+    (python, javascript, typescript, cpp, java, go).
+    """
+    snippet = CodingTemplateService.get_language_snippet(language)
+    return SnippetResponse(language=language.lower(), starter_code=snippet)
+
