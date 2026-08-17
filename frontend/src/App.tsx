@@ -16,6 +16,8 @@ import { AdminCreators } from './pages/AdminCreators';
 import { AdminPlatforms } from './pages/AdminPlatforms';
 import { AdminSettings } from './pages/AdminSettings';
 import { AdminAuditLogs } from './pages/AdminAuditLogs';
+import { UserManagementPage } from './pages/UserManagementPage';
+
 import { CreatorDashboard } from './pages/CreatorDashboard';
 import { AssessmentsList } from './pages/AssessmentsList';
 import { AssessmentBuilder } from './pages/AssessmentBuilder';
@@ -164,6 +166,16 @@ export const App: React.FC = () => {
             }
           />
           <Route
+            path="/portal-admin/users"
+            element={
+              <ProtectedRoute allowedRoles={['PORTAL_ADMIN']}>
+                <DashboardLayout>
+                  <UserManagementPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/portal-admin/creators"
             element={
               <ProtectedRoute allowedRoles={['PORTAL_ADMIN']}>
@@ -173,6 +185,7 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/portal-admin/platforms"
             element={

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: evalai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=SUPER_SECRET_RECRUITMENT_PROCTORING_KEY_CHANGE_IN_PROD_2026
+      - AI_PROVIDER=builtin_expert
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+    volumes:
+      - ./backend/assessment_portal.db:/app/assessment_portal.db
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: evalai_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always

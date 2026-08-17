@@ -16,14 +16,21 @@ async def setup_test_db():
 @pytest.mark.asyncio
 async def test_proctoring_snapshot_upload_and_gallery():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Candidate login
+        # Register an isolated test candidate
+        cand_email = "snapshot_tester@example.com"
+        await client.post("/api/v1/auth/register", json={
+            "full_name": "Snapshot Candidate",
+            "email": cand_email,
+            "password": "Candidate@12345"
+        })
         c_login = await client.post("/api/v1/auth/login", json={
-            "email": "candidate@example.com",
+            "email": cand_email,
             "password": "Candidate@12345"
         })
         assert c_login.status_code == 200
         cand_token = c_login.json()["access_token"]
         cand_headers = {"Authorization": f"Bearer {cand_token}"}
+
 
         # Recruiter login
         r_login = await client.post("/api/v1/auth/login", json={

@@ -31,12 +31,14 @@ export const Sidebar: React.FC = () => {
 
   const adminLinks: NavLinkItem[] = [
     { to: '/portal-admin', label: 'Executive Overview', icon: LayoutDashboard },
+    { to: '/portal-admin/users', label: 'User Logins & Excel', icon: UserCheck },
     { to: '/portal-admin/creators', label: 'Test Creators', icon: Users },
     { to: '/portal-admin/platforms', label: 'Coding Platforms', icon: Globe2 },
     { to: '/portal-admin/proctoring', label: 'Proctoring Policies', icon: Shield },
     { to: '/portal-admin/settings', label: 'Global Settings', icon: Settings },
     { to: '/portal-admin/audit-logs', label: 'Audit Trail', icon: History },
   ];
+
 
   const creatorLinks: NavLinkItem[] = [
     { to: '/creator', label: 'Overview', icon: LayoutDashboard },

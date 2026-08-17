@@ -1,10 +1,11 @@
 services:
+  # Backend API Service
   - type: web
     name: evalai-backend
     runtime: python
     plan: free
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python seed_data.py
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -15,3 +16,21 @@ services:
         value: builtin_expert
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: 1440
+
+  # Frontend Web Application
+  - type: static
+    name: evalai-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: evalai-backend
+          property: host
+

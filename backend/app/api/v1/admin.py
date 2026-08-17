@@ -1,7 +1,13 @@
+import io
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
+
 from app.core.database import get_db
 from app.core.security import require_portal_admin, get_password_hash
 from app.core.audit import log_audit_event
@@ -432,3 +438,261 @@ async def list_audit_logs(
         query = query.where(AuditLog.action == action)
     res = await db.execute(query)
     return res.scalars().all()
+
+
+# ----------------- User Accounts & Excel Export -----------------
+
+@router.get("/users/all")
+async def list_all_users(
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Lists all registered users categorized into Admins, Teachers (Creators), and Students (Attenders)."""
+    # 1. Admins
+    admins_res = await db.execute(select(PortalAdmin))
+    admins = admins_res.scalars().all()
+    admin_list = [
+        {
+            "id": a.id,
+            "full_name": a.full_name,
+            "email": a.email,
+            "role": "ADMIN",
+            "is_active": a.is_active,
+            "created_at": a.created_at.isoformat() if a.created_at else None
+        }
+        for a in admins
+    ]
+
+    # 2. Teachers / Creators
+    creators_res = await db.execute(select(TestCreator).options(selectinload(TestCreator.company)))
+    creators = creators_res.scalars().all()
+    creator_list = [
+        {
+            "id": c.id,
+            "full_name": c.full_name,
+            "email": c.email,
+            "role": "TEACHER",
+            "phone": c.phone or "N/A",
+            "company_name": c.company.name if c.company else "Default",
+            "is_active": c.is_active,
+            "created_at": c.created_at.isoformat() if c.created_at else None
+        }
+        for c in creators
+    ]
+
+    # 3. Students / Attenders
+    attenders_res = await db.execute(select(TestAttender))
+    attenders = attenders_res.scalars().all()
+    attender_list = [
+        {
+            "id": s.id,
+            "full_name": s.full_name,
+            "email": s.email,
+            "role": "STUDENT",
+            "phone": s.phone or "N/A",
+            "is_verified": s.is_verified,
+            "is_active": s.is_active,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        }
+        for s in attenders
+    ]
+
+    return {
+        "admins": admin_list,
+        "teachers": creator_list,
+        "students": attender_list,
+        "total_users": len(admin_list) + len(creator_list) + len(attender_list)
+    }
+
+
+@router.delete("/users/{user_type}/{user_id}")
+async def delete_user(
+    user_type: str,
+    user_id: str,
+    request: Request,
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Removes a user account (admin, teacher/creator, or student/attender)."""
+    user_type_norm = user_type.lower().strip()
+    
+    if user_type_norm in ["admin", "portal_admin"]:
+        if user_id == admin.id:
+            raise HTTPException(status_code=400, detail="Cannot delete your own active Portal Admin account.")
+        res = await db.execute(select(PortalAdmin).where(PortalAdmin.id == user_id))
+        target = res.scalars().first()
+        if not target:
+            raise HTTPException(status_code=404, detail="Admin account not found.")
+        target_role = "PORTAL_ADMIN"
+        target_email = target.email
+        await db.delete(target)
+
+    elif user_type_norm in ["teacher", "creator", "test_creator"]:
+        res = await db.execute(select(TestCreator).where(TestCreator.id == user_id))
+        target = res.scalars().first()
+        if not target:
+            raise HTTPException(status_code=404, detail="Teacher/Creator account not found.")
+        target_role = "TEST_CREATOR"
+        target_email = target.email
+        await db.delete(target)
+
+    elif user_type_norm in ["student", "attender", "test_attender"]:
+        res = await db.execute(select(TestAttender).where(TestAttender.id == user_id))
+        target = res.scalars().first()
+        if not target:
+            raise HTTPException(status_code=404, detail="Student/Attender account not found.")
+        target_role = "TEST_ATTENDER"
+        target_email = target.email
+        await db.delete(target)
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid user_type. Expected 'admin', 'teacher', or 'student'.")
+
+    await log_audit_event(
+        db=db,
+        action="USER_REMOVED",
+        user_id=admin.id,
+        user_role="PORTAL_ADMIN",
+        target_type=target_role,
+        target_id=user_id,
+        ip_address=request.client.host if request.client else None,
+        details={"deleted_user_email": target_email, "user_type": user_type_norm}
+    )
+    await db.commit()
+    return {"message": f"User '{target_email}' successfully removed from system."}
+
+
+@router.get("/users/export-excel")
+async def export_users_excel(
+    admin: PortalAdmin = Depends(require_portal_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Generates an Excel (.xlsx) file containing 3 separate worksheets for Admins, Teachers, and Students."""
+    wb = openpyxl.Workbook()
+    # Remove default sheet
+    wb.remove(wb.active)
+
+    # Styling definitions
+    header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    data_font = Font(name="Calibri", size=10, color="0F172A")
+    thin_border = Border(
+        left=Side(style='thin', color='E2E8F0'),
+        right=Side(style='thin', color='E2E8F0'),
+        top=Side(style='thin', color='E2E8F0'),
+        bottom=Side(style='thin', color='E2E8F0')
+    )
+
+    # Demo default passwords mapping for reference in export
+    KNOWN_DEMO_PASSWORDS = {
+        "admin@assessmentportal.io": "Admin@12345 (Default Demo)",
+        "recruiter@techcorp.com": "Creator@12345 (Default Demo)",
+        "candidate@example.com": "Candidate@12345 (Default Demo)",
+    }
+
+    # Helper function to create sheet
+    def build_sheet(sheet_title, headers, rows):
+        ws = wb.create_sheet(title=sheet_title)
+        ws.views.sheetView[0].showGridLines = True
+
+        # Header Row
+        ws.append(headers)
+        for col_num in range(1, len(headers) + 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+        # Data Rows
+        for row_data in rows:
+            ws.append(row_data)
+            row_idx = ws.max_row
+            for col_num in range(1, len(row_data) + 1):
+                cell = ws.cell(row=row_idx, column=col_num)
+                cell.font = data_font
+                cell.border = thin_border
+                if col_num in [1, 4, 6]:
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                else:
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+
+        # Auto-adjust column widths
+        for col in ws.columns:
+            max_len = 0
+            col_letter = openpyxl.utils.get_column_letter(col[0].column)
+            for cell in col:
+                val_str = str(cell.value or '')
+                max_len = max(max_len, len(val_str))
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 15)
+
+    # 1. Admins Sheet
+    admins_res = await db.execute(select(PortalAdmin))
+    admins = admins_res.scalars().all()
+    admin_headers = ["User ID", "Full Name", "Mail ID / Username", "Password Info", "Status", "Joined Date"]
+    admin_rows = []
+    for a in admins:
+        pwd_info = KNOWN_DEMO_PASSWORDS.get(a.email.lower(), "Bcrypt Hash (Encrypted)")
+        admin_rows.append([
+            a.id,
+            a.full_name,
+            a.email,
+            pwd_info,
+            "Active" if a.is_active else "Inactive",
+            a.created_at.strftime("%Y-%m-%d %H:%M") if a.created_at else "N/A"
+        ])
+    build_sheet("Admins", admin_headers, admin_rows)
+
+    # 2. Teachers / Creators Sheet
+    creators_res = await db.execute(select(TestCreator).options(selectinload(TestCreator.company)))
+    creators = creators_res.scalars().all()
+    teacher_headers = ["User ID", "Full Name", "Mail ID / Username", "Password Info", "Phone Number", "Company", "Status", "Joined Date"]
+    teacher_rows = []
+    for c in creators:
+        pwd_info = KNOWN_DEMO_PASSWORDS.get(c.email.lower(), "Bcrypt Hash (Encrypted)")
+        teacher_rows.append([
+            c.id,
+            c.full_name,
+            c.email,
+            pwd_info,
+            c.phone or "N/A",
+            c.company.name if c.company else "Default",
+            "Active" if c.is_active else "Inactive",
+            c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "N/A"
+        ])
+    build_sheet("Teachers (Creators)", teacher_headers, teacher_rows)
+
+    # 3. Students / Attenders Sheet
+    attenders_res = await db.execute(select(TestAttender))
+    attenders = attenders_res.scalars().all()
+    student_headers = ["User ID", "Full Name", "Mail ID / Username", "Password Info", "Phone Number", "Verification Status", "Status", "Joined Date"]
+    student_rows = []
+    for s in attenders:
+        pwd_info = KNOWN_DEMO_PASSWORDS.get(s.email.lower(), "Bcrypt Hash (Encrypted)")
+        student_rows.append([
+            s.id,
+            s.full_name,
+            s.email,
+            pwd_info,
+            s.phone or "N/A",
+            "Verified" if s.is_verified else "Pending Verification",
+            "Active" if s.is_active else "Inactive",
+            s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "N/A"
+        ])
+    build_sheet("Students (Attenders)", student_headers, student_rows)
+
+    # Save workbook to BytesIO stream
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    headers = {
+        "Content-Disposition": 'attachment; filename="EvalAI_User_Logins_Report.xlsx"',
+        "Access-Control-Expose-Headers": "Content-Disposition"
+    }
+
+    return Response(
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
+

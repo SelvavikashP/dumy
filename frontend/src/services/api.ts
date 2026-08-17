@@ -72,6 +72,29 @@ export const api = {
   updatePlatform: (slug: string, data: any) => request<any>(`/admin/platforms/${slug}`, { method: 'PATCH', body: JSON.stringify(data) }),
   testPlatformConnection: (slug: string) => request<any>(`/admin/platforms/${slug}/test-connection`, { method: 'POST' }),
   listAuditLogs: (limit = 100, action?: string) => request<any[]>(`/admin/audit-logs?limit=${limit}${action ? `&action=${action}` : ''}`),
+  listAllUsers: () => request<{ admins: any[]; teachers: any[]; students: any[]; total_users: number }>('/admin/users/all'),
+  deleteUser: (userType: string, userId: string) => request<any>(`/admin/users/${userType}/${userId}`, { method: 'DELETE' }),
+  exportUsersExcel: async () => {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${API_BASE}/admin/users/export-excel`, { headers });
+    if (!res.ok) {
+      throw new Error(`Export failed with status ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EvalAI_User_Logins_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
 
   // Assessments
   listAssessments: (status?: string) => request<any[]>(`/assessments${status ? `?status_filter=${status}` : ''}`),
