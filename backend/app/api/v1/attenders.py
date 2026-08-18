@@ -31,15 +31,16 @@ async def list_assigned_assessments(
         assessment_ids.add(p.id)
 
     assessments_out = []
-    for a_id in assessment_ids:
-        a_res = await db.execute(
-            select(Assessment).where(Assessment.id == a_id).options(
-                selectinload(Assessment.sections)
-            )
-        )
-        asm = a_res.scalars().first()
-        if not asm:
-            continue
+    if not assessment_ids:
+        return []
+
+    asm_query = await db.execute(
+        select(Assessment)
+        .where(Assessment.id.in_(assessment_ids))
+        .options(selectinload(Assessment.sections))
+        .order_by(Assessment.created_at.asc())
+    )
+    for asm in asm_query.scalars().all():
 
         # Check existing attempts
         att_res = await db.execute(

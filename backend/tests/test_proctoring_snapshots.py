@@ -17,7 +17,8 @@ async def setup_test_db():
 async def test_proctoring_snapshot_upload_and_gallery():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Register an isolated test candidate
-        cand_email = "snapshot_tester@example.com"
+        import uuid
+        cand_email = f"snapshot_tester_{uuid.uuid4().hex[:8]}@example.com"
         await client.post("/api/v1/auth/register", json={
             "full_name": "Snapshot Candidate",
             "email": cand_email,

@@ -37,6 +37,7 @@ class Company(Base):
     assessments = relationship("Assessment", back_populates="company", cascade="all, delete-orphan")
 
 class TestCreator(Base):
+    __test__ = False
     __tablename__ = "test_creators"
 
     id = Column(String(36), primary_key=True, default=gen_uuid)
@@ -65,6 +66,7 @@ class CreatorPermission(Base):
     creator = relationship("TestCreator", back_populates="permissions")
 
 class TestAttender(Base):
+    __test__ = False
     __tablename__ = "test_attenders"
 
     id = Column(String(36), primary_key=True, default=gen_uuid)
